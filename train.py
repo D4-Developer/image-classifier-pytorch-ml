@@ -59,8 +59,13 @@ with open('cat_to_name.json', 'r') as f:
     cat_to_name = json.load(f)
     
 # TODO: Build and train your network
-model = models.vgg19(pretrained=True)
-model
+modelAvailable = ['vgg19', 'vagg11']
+
+modelS = input("select your training model.... 0.vgg19 or 1.vgg11 ")
+if modelS == 0:
+	model = models.vgg19(pretrained=True)
+else: 
+	model = models.vgg11(pretrained=True)
 
 
 for parameter in model.parameters():
@@ -76,8 +81,6 @@ classifier = nn.Sequential(OrderedDict([
 model.classifier = classifier
 
 model.classifier
-
-model.cuda()
 
 def validation(model, dataloader, criterion):
     valid_loss = 0
@@ -155,21 +158,32 @@ def train_model(model, criterion, optimizer, num_epochs=25, device='cuda'):
 
     return model
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+d = input("Select device 0.Cpu 1.Gpu")
+if d == 0:
+	device = 'cpu'
+else:
+	device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+model.to(device)
 
 criteria = nn.NLLLoss()
 
-optimizer = optim.Adam(model.classifier.parameters(), lr=0.0003)
+lnrate = input("Enter learning rate ")
+lnrate = float(lnrate)
+optimizer = optim.Adam(model.classifier.parameters(), lr=lnrate)
 
-eps = 5
-
-model_ft = train_model(model, criteria ,optimizer, 5, 'cuda')
+eps = input("enter no. of epochs")
+eps = int(eps)
+model_ft = train_model(model, criteria ,optimizer, eps, 'cuda')
 
 print(model_ft)
 
 # TODO: Save the checkpoint 
 model.class_to_idx = image_datasets['train'].class_to_idx
 model.cpu()
+
 torch.save({
             'class_to_idx': model.class_to_idx,
             'model_state_dict': model.state_dict(),

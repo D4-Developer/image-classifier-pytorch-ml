@@ -1,5 +1,5 @@
 # Imports here
-import torch, time
+import torch, time, json
 from torch import nn
 from torch import optim
 from PIL import Image    
@@ -40,6 +40,9 @@ print("model is loaded")
 
 print(premodel.classifier)
 
+classname = input("enter file name where image classes are stored ") 
+with open(classname, 'r') as f:
+    cat_to_name = json.load(f)
 
 def process_image(img_path):
 
@@ -95,7 +98,7 @@ def imshow(image, ax=None, title=None):
 
 image_path = 'flowers/test/1/image_06743.jpg'
 img = process_image(image_path)
-imshow(img)
+# imshow(img)
 
 
 def predict(image_path, model, topk=5):
@@ -103,7 +106,7 @@ def predict(image_path, model, topk=5):
     '''
     
     image = process_image(image_path)
-    imshow(image)
+#     imshow(image)
     
     image = torch.from_numpy(image).type(torch.FloatTensor) 
     image.unsqueeze_(0)
@@ -124,20 +127,26 @@ def predict(image_path, model, topk=5):
     return top_probs, top_labels, top_flowers
 
 
-def plot_solution(image_path, model):
+def plot_solution(image_path, model, k):
     # Set up plot
-    plt.figure(figsize = (6,10))
-    ax = plt.subplot(2,1,1)    # Set up title
+#     plt.figure(figsize = (6,10))
+#     ax = plt.subplot(2,1,1)    # Set up title
     flower_num = image_path.split('/')[2]
     print(flower_num)
     title_ = cat_to_name[flower_num]    # Plot flower
     img = process_image(image_path)
-    imshow(img, ax, title = title_)    # Make prediction
-    probs, labs, flowers = predict(image_path, model, 5)     # Plot bar chart
-    plt.subplot(2,1,2)
-    sns.barplot(x=probs, y=flowers, color=sns.color_palette()[0]);
-    plt.show()
+#     imshow(img, ax, title = title_)   # Make prediction
+    probs, labs, flowers = predict(image_path, model, k)     # Plot bar chart
+#     plt.subplot(2,1,2)
+#     sns.barplot(x=probs, y=flowers, color=sns.color_palette()[0]);
+#     plt.show()
+    return probs, labs, flowers
     
-    
-image_path = 'flowers/test/28/image_05253.jpg'
-plot_solution(image_path, premodel)
+
+k = input("Enter the value of k parameter in topk function ")
+k = int(k)
+image_path = input("Enter image path ")
+if len(image_path) == 0:
+	image_path = 'flowers/test/28/image_05253.jpg'
+	
+print(plot_solution(image_path, premodel, k))
