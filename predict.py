@@ -16,15 +16,23 @@ from torchvision import datasets, transforms, models
 def load_checkpoints(path):
     lcheckpoint = torch.load(path)
     
-    model = models.vgg19(pretrained=True)
+    if checkpoint['arch'] == 'vgg16':
+        model = models.vgg16(pretrained=True)
+    elif checkpoint['arch'] == 'vgg19':
+        model = models.vgg19(pretrained=True)
+    else checkpoint['arch'] == 'vgg11':
+        model = models.vgg11(pretrained=True)
+    else :
+        print('Model not supported')
+        sys.exit()
     
     for param in model.parameters():
             param.requires_grad = False
     
     classifier = nn.Sequential(OrderedDict([
-                          ('fc1', nn.Linear(25088, 4096)),
+                          ('fc1', nn.Linear(25088, checkpoint['hidden'])),
                           ('relu', nn.ReLU()),
-                          ('fc2', nn.Linear(4096, 102)),
+                          ('fc2', nn.Linear(checkpoint['hidden'], 102)),
                           ('output', nn.LogSoftmax(dim=1))
                           ]))
     
@@ -42,7 +50,7 @@ print(premodel.classifier)
 
 classname = input("enter file name where image classes are stored ") 
 with open(classname, 'r') as f:
-    cat_to_name = json.load(f)
+    class_names = json.load(f)
 
 def process_image(img_path):
 
@@ -96,8 +104,8 @@ def imshow(image, ax=None, title=None):
     return ax
 
 
-image_path = 'flowers/test/1/image_06743.jpg'
-img = process_image(image_path)
+# image_path = 'flowers/test/1/image_06743.jpg'
+# img = process_image(image_path)
 # imshow(img)
 
 
@@ -122,7 +130,7 @@ def predict(image_path, model, topk=5):
     
     idx_to_class = {val: key for key, val in model.class_to_idx.items()}
     top_labels = [idx_to_class[lab] for lab in top_labs]
-    top_flowers = [cat_to_name[idx_to_class[lab]] for lab in top_labs]
+    top_flowers = [class_names[idx_to_class[lab]] for lab in top_labs]
     
     return top_probs, top_labels, top_flowers
 
@@ -133,7 +141,7 @@ def plot_solution(image_path, model, k):
 #     ax = plt.subplot(2,1,1)    # Set up title
     flower_num = image_path.split('/')[2]
     print(flower_num)
-    title_ = cat_to_name[flower_num]    # Plot flower
+    title_ = class_names[flower_num]    # Plot flower
     img = process_image(image_path)
 #     imshow(img, ax, title = title_)   # Make prediction
     probs, labs, flowers = predict(image_path, model, k)     # Plot bar chart
@@ -148,5 +156,15 @@ k = int(k)
 image_path = input("Enter image path ")
 if len(image_path) == 0:
 	image_path = 'flowers/test/28/image_05253.jpg'
+
+d = input("Select device for training default will be GPU...0)Cpu 1)Gpu")
+if d == 0:
+    device = 'cpu'
+else if d == 1:
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+else:
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+premodel.to(device)
 	
 print(plot_solution(image_path, premodel, k))
